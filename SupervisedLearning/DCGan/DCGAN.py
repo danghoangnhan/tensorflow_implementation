@@ -4,23 +4,31 @@ from torch import randn, zeros, rand, mean, no_grad
 from torch.distributions import Uniform
 from torch.optim import Adam
 from torch.nn import BCELoss
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
+from torchvision.datasets import ImageFolder
 from torchvision.utils import make_grid, save_image
 from torchvision import datasets as torch_dataset
 from tqdm import tqdm
 
+from GPU import DeviceDataLoader
 from SupervisedLearning.DCGan import weights_init
 from SupervisedLearning.DCGan.Discriminator import Discriminator
 from SupervisedLearning.DCGan.Generator import Generator
 from matplotlib import pyplot as plt
 import torch.nn.functional as F
 from torch.cuda import empty_cache
+import torchvision.transforms as T
+
+
+def denorm(image, normalization_stats):
+    return image * normalization_stats[1][0] + normalization_stats[0][0]
 
 
 class DCGan:
-    def __init__(self, z=100, nc=64, epoch_numb=50000, learning_rate=0.0002, beta1=0.5, img_size=64, device='cuda'):
-        self.dataset = torch_dataset.ImageFolder(root=data_dir, transform=data_transforms)
-        self.dataloader = DataLoader(dataset=self.dataset, batch_size=128, shuffle=True, num_workers=4)
+    def __init__(self, z=100, batch_size=8, epoch_numb=50000, learning_rate=0.0002, beta1=0.5, img_size=64,
+                 device='cuda',
+                 result='./result', data_dir='./data'):
+
         self.img_list = []
         self.dis_model = Discriminator()
         self.gen_model = Generator()
@@ -35,27 +43,32 @@ class DCGan:
         self.device = device
         self.epoch_numb = epoch_numb
         self.fixed_noise = randn(32, 100, 1, 1, device=device)
+        self.RESULTS_DIR = result
+        self.datadir = data_dir
+        self.batch_size = batch_size
+        self.normalization_stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)  # Convert channels from [0, 1] to [-1, 1]
+        self.fixed_latent_batch = randn(64, self.seed_size, 1, 1, device=device)
+
         print('init model completed')
 
-    def train_generator(self, batch_size, seed_size, device):
+    def train_generator(self, gen_optimizer, batch_size, seed_size, device):
         # Clear the generator gradients
-        self.zero_grad()
+        gen_optimizer.zero_grad()
+
         # Generate some fake pokemon
         latent_batch = randn(batch_size, seed_size, 1, 1, device=device)
         fake_pokemon = self.gen_model(latent_batch)
 
         # Test against the discriminator
         disc_predictions = self.dis_model(fake_pokemon)
-
         # We want the discriminator to think these images are real.
         targets = zeros(fake_pokemon.size(0), 1, device=device)
-
         # How well did the generator do? (How much did the discriminator believe the generator?)
         loss = F.binary_cross_entropy(disc_predictions, targets)
 
         # Update the generator based on how well it fooled the discriminator
         loss.backward()
-        self.step()
+        gen_optimizer.step()
         # Return generator loss
         return loss.item()
 
@@ -66,11 +79,12 @@ class DCGan:
         # Train on the real images
         real_predictions = self.dis_model(real_image)
 
-        # real_targets = torch.zeros(real_pokemon.size(0), 1, device=device) # All of these are real, so the target is 0.
-        real_targets = rand(real_image.size(0), 1, device=device) * (
-                0.1 - 0) + 0  # Add some noisy labels to make the discriminator think harder.
-        real_loss = F.binary_cross_entropy(real_predictions,
-                                           real_targets)  # Can do binary loss function because it is a binary classifier
+        real_targets = rand(real_image.size(0), 1, device=device) * (0.1 - 0) + 0
+        # Add some noisy labels to make the discriminator think harder.
+
+        real_loss = F.binary_cross_entropy(real_predictions, real_targets)
+        # Can do binary loss function because it is a binary classifier
+
         real_score = mean(
             real_predictions).item()  # How well does the discriminator classify the real pokemon? (Higher score is better for the discriminator)
 
@@ -95,18 +109,46 @@ class DCGan:
         disc_optimizer.step()
         return total_loss.item(), real_score, gen_score
 
-    def train(self, device):
+    def train(self, device, start_idx=1):
         # Empty the GPU cache to save some memory
         empty_cache()
-
         # Track losses and scores
         disc_losses = []
         disc_scores = []
         gen_losses = []
         gen_scores = []
 
-        optim_D = Adam(self.dis_model.parameters(), lr=self.learning_rate, betas=(beta1, 0.999))
-        optim_G = Adam(self.gen_model.parameters(), lr=self.learning_rate, betas=(beta1, 0.999))
+        optim_D = Adam(self.dis_model.parameters(), lr=self.learning_rate, betas=(0.5, 0.999))
+        optim_G = Adam(self.gen_model.parameters(), lr=self.learning_rate, betas=(0.5, 0.999))
+
+        normal_dataset = ImageFolder(self.datadir, transform=T.Compose([
+            T.Resize(self.img_size),
+            T.CenterCrop(self.img_size),
+            T.ToTensor(),
+            T.Normalize(*self.normalization_stats)]))
+
+        # Augment the dataset with mirrored images
+        mirror_dataset = ImageFolder(self.datadir, transform=T.Compose([
+            T.Resize(self.img_size),
+            T.CenterCrop(self.img_size),
+            T.RandomHorizontalFlip(p=1.0),
+            T.ToTensor(),
+            T.Normalize(*self.normalization_stats)]))
+
+        # Augment the dataset with color changes
+        color_jitter_dataset = ImageFolder(self.datadir, transform=T.Compose([
+            T.Resize(self.img_size),
+            T.CenterCrop(self.img_size),
+            T.ColorJitter(0.5, 0.5, 0.5),
+            T.ToTensor(),
+            T.Normalize(*self.normalization_stats)]))
+
+        # Combine the datasets
+        dataset_list = [normal_dataset, mirror_dataset, color_jitter_dataset]
+        dataset = ConcatDataset(dataset_list)
+
+        dataloader = DataLoader(dataset, self.batch_size, shuffle=True, num_workers=4, pin_memory=False)
+        dev_dataloader = DeviceDataLoader(dataloader, device)
 
         for epoch in range(self.epoch_numb):
             # Go through each image
@@ -117,15 +159,18 @@ class DCGan:
                 # Train the generator
                 gen_loss = self.train_generator(optim_G)
 
-                # Print the losses and scores
-                # Collect results
-                disc_losses.append(disc_loss)
-                disc_scores.append(real_score)
-                gen_losses.append(gen_loss)
-                gen_scores.append(gen_score)
+            # Collect results
+            disc_losses.append(disc_loss)
+            disc_scores.append(real_score)
+            gen_losses.append(gen_loss)
+            gen_scores.append(gen_score)
+
+            # Print the losses and scores
             print("Epoch [{}/{}], gen_loss: {:.4f}, disc_loss: {:.4f}, real_score: {:.4f}, gen_score: {:.4f}".format(
                 epoch + start_idx, epoch, gen_loss, disc_loss, real_score, gen_score))
-            self.save_results(epoch + start_idx, fixed_latent_batch, show=False)
+
+            # Save the images and show the progress
+            self.save_results(epoch + start_idx, self.fixed_latent_batch, show=False)
         # Return stats
         return disc_losses, disc_scores, gen_losses, gen_scores
 
@@ -135,7 +180,7 @@ class DCGan:
         # Make the filename for the output
         fake_file = "result-image-{0:0=4d}.png".format(index)
         # Save the image
-        save_image(denorm(fake_pokemon), os.path.join(RESULTS_DIR, fake_file), nrow=8)
+        save_image(denorm(fake_pokemon,self.normalization_stats), os.path.join(self.RESULTS_DIR, fake_file), nrow=8)
         print("Result Saved!")
 
         if show:
@@ -143,3 +188,14 @@ class DCGan:
             ax.set_xticks([])
             ax.set_yticks([])
             ax.imshow(make_grid(fake_pokemon.cpu().detach(), nrow=8).permute(1, 2, 0))
+
+    def cleanup(self):
+        import gc
+        # del dev_dataloader
+        del self.dis_model
+        del self.gen_model
+        dev_dataloader = None
+        discriminator = None
+        generator = None
+        gc.collect()
+        empty_cache()
