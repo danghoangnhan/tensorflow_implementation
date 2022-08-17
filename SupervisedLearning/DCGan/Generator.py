@@ -187,7 +187,8 @@ def gen_64_1():
     )
 
 
-gen_64_2 = Sequential(
+def gen_64_2():
+    return Sequential(
     # Input seed_size x 1 x 1
     ConvTranspose2d(seed_size, 128, kernel_size=4, padding=0, stride=1, bias=False),
     BatchNorm2d(128),
@@ -216,16 +217,19 @@ gen_64_2 = Sequential(
 
 
 class Generator(Module):
-    def __init__(self, z=100, nc=64):
+    def __init__(self, z=100, nc=64,type=None):
         super(Generator, self).__init__()
-        self.net = Sequential(
-            Deconv(z, nc * 8, 4, 1, 0),
-            Deconv(nc * 8, nc * 4, 4, 2, 1),
-            Deconv(nc * 4, nc * 2, 4, 2, 1),
-            Deconv(nc * 2, nc, 4, 2, 1),
-            ConvTranspose2d(nc, 3, 4, 2, 1, bias=False),
-            Tanh()
-        )
+        if type == "gen_64_2":
+            self.net = gen_64_2()
+        else:
+            self.net = Sequential(
+                Deconv(z, nc * 8, 4, 1, 0),
+                Deconv(nc * 8, nc * 4, 4, 2, 1),
+                Deconv(nc * 4, nc * 2, 4, 2, 1),
+                Deconv(nc * 2, nc, 4, 2, 1),
+                ConvTranspose2d(nc, 3, 4, 2, 1, bias=False),
+                Tanh()
+            )
 
     def forward(self, input):
         return self.net(input)

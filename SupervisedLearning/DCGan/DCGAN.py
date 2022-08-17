@@ -18,6 +18,7 @@ from matplotlib import pyplot as plt
 import torch.nn.functional as F
 from torch.cuda import empty_cache
 import torchvision.transforms as T
+import gc
 
 
 def denorm(image, normalization_stats):
@@ -26,14 +27,14 @@ def denorm(image, normalization_stats):
 
 class DCGan:
     def __init__(self, z=100, batch_size=8, epoch_numb=50000, learning_rate=0.0002, beta1=0.5, img_size=64,
-                 device='cuda',
-                 result='./result', data_dir='./data'):
+                 device='cuda', result='./result', data_dir='./data', seed_size=16):
 
+        self.seed_size = seed_size
         self.img_list = []
-        self.dis_model = Discriminator()
-        self.gen_model = Generator()
-        self.gen_model.apply(weights_init)
-        self.dis_model.apply(weights_init)
+        self.dis_model = Discriminator(type="disc_64_2")
+        self.gen_model = Generator(type="gen_64_2")
+        # self.gen_model.apply(weights_init)
+        # self.dis_model.apply(weights_init)
         self.dis_model.to(device)
         self.gen_model.to(device)
         self.learning_rate = learning_rate
@@ -51,18 +52,18 @@ class DCGan:
 
         print('init model completed')
 
-    def train_generator(self, gen_optimizer, batch_size, seed_size, device):
+    def train_generator(self, gen_optimizer):
         # Clear the generator gradients
         gen_optimizer.zero_grad()
 
         # Generate some fake pokemon
-        latent_batch = randn(batch_size, seed_size, 1, 1, device=device)
+        latent_batch = randn(self.batch_size, self.seed_size, 1, 1, device=self.device)
         fake_pokemon = self.gen_model(latent_batch)
 
         # Test against the discriminator
         disc_predictions = self.dis_model(fake_pokemon)
         # We want the discriminator to think these images are real.
-        targets = zeros(fake_pokemon.size(0), 1, device=device)
+        targets = zeros(fake_pokemon.size(0), 1, device=self.device)
         # How well did the generator do? (How much did the discriminator believe the generator?)
         loss = F.binary_cross_entropy(disc_predictions, targets)
 
@@ -72,24 +73,23 @@ class DCGan:
         # Return generator loss
         return loss.item()
 
-    def train_discriminator(self, real_image, disc_optimizer, batch_size, seed_size, device):
+    def train_discriminator(self, real_image, disc_optimizer):
         # Reset the gradients for the optimizer
         disc_optimizer.zero_grad()
 
         # Train on the real images
         real_predictions = self.dis_model(real_image)
 
-        real_targets = rand(real_image.size(0), 1, device=device) * (0.1 - 0) + 0
+        real_targets = rand(real_image.size(0), 1, device=self.device) * (0.1 - 0) + 0
         # Add some noisy labels to make the discriminator think harder.
-
         real_loss = F.binary_cross_entropy(real_predictions, real_targets)
         # Can do binary loss function because it is a binary classifier
 
-        real_score = mean(
-            real_predictions).item()  # How well does the discriminator classify the real pokemon? (Higher score is better for the discriminator)
+        real_score = mean(real_predictions).item()
+        # How well does the discriminator classify the real pokemon? (Higher score is better for the discriminator)
 
         # Make some latent tensors to seed the generator
-        latent_batch = randn(batch_size, seed_size, 1, 1, device=device)
+        latent_batch = randn(self.batch_size, self.seed_size, 1, 1, device=self.device)
 
         # Get some fake pokemon
         fake_pokemon = self.gen_model(latent_batch)
@@ -98,7 +98,7 @@ class DCGan:
         gen_predictions = self.dis_model(fake_pokemon)
         # gen_targets = torch.ones(fake_pokemon.size(0), 1, device=device)
         # Add some noisy labels to make the discriminator think harder.
-        gen_targets = rand(fake_pokemon.size(0), 1, device=device) * (1 - 0.9) + 0.9
+        gen_targets = rand(fake_pokemon.size(0), 1, device=self.device) * (1 - 0.9) + 0.9
         gen_loss = F.binary_cross_entropy(gen_predictions, gen_targets)
         # How well did the discriminator classify the fake pokemon? (Lower score is better for the discriminator)
         gen_score = mean(gen_predictions).item()
@@ -109,7 +109,7 @@ class DCGan:
         disc_optimizer.step()
         return total_loss.item(), real_score, gen_score
 
-    def train(self, device, start_idx=1):
+    def train(self, start_idx=1):
         # Empty the GPU cache to save some memory
         empty_cache()
         # Track losses and scores
@@ -148,7 +148,7 @@ class DCGan:
         dataset = ConcatDataset(dataset_list)
 
         dataloader = DataLoader(dataset, self.batch_size, shuffle=True, num_workers=4, pin_memory=False)
-        dev_dataloader = DeviceDataLoader(dataloader, device)
+        dev_dataloader = DeviceDataLoader(dataloader, device=self.device)
 
         for epoch in range(self.epoch_numb):
             # Go through each image
@@ -180,7 +180,8 @@ class DCGan:
         # Make the filename for the output
         fake_file = "result-image-{0:0=4d}.png".format(index)
         # Save the image
-        save_image(denorm(fake_pokemon,self.normalization_stats), os.path.join(self.RESULTS_DIR, fake_file), nrow=8)
+        print(os.path.abspath(os.getcwd()))
+        save_image(denorm(fake_pokemon, self.normalization_stats), os.path.join(self.RESULTS_DIR, fake_file), nrow=8)
         print("Result Saved!")
 
         if show:
@@ -190,12 +191,14 @@ class DCGan:
             ax.imshow(make_grid(fake_pokemon.cpu().detach(), nrow=8).permute(1, 2, 0))
 
     def cleanup(self):
-        import gc
-        # del dev_dataloader
+
         del self.dis_model
         del self.gen_model
         dev_dataloader = None
-        discriminator = None
-        generator = None
+        self.gen_model = None
+        self.dis_model = None
         gc.collect()
         empty_cache()
+
+
+
