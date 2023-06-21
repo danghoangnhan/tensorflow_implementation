@@ -3,3 +3,4 @@
 .iml
 result/
 data/
+__pycache__
