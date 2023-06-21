@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import log, dot, e,int16
 from numpy.random import rand
+from sklearn.preprocessing import LabelEncoder
 
 """
 Created on Fri April  11 04:02:05 2023
@@ -19,16 +20,15 @@ class LinearRegression:
     def fit(self, X, y):
         n_samples, n_features = X.shape
         self.weights = rand(n_features).reshape(-1, 1)
-
-        cost = []
+        labelencoder = LabelEncoder()
+        y_train = labelencoder.fit_transform(y_train)
+        y_val = labelencoder.fit_transform(y_val)
+        
         for i in range(1, self.iteration):
-            r = self.predict(X) - y
-            cost.append(.5 * np.sum(r * r))
-            # self.weights[0] -= self.learningrate * np.sum(r)
-            # # correct the shape dimension
-            # self.weights[1] -= self.learningrate * np.sum(np.multiply(r, X[:, 1].reshape(-1, 1)))
-            self.weights -= self.learningrate * np.sum(r) / n_samples
-        self.loss = cost
+            y_pred = self.predict(X)
+            gradient = np.dot(X.T, (y_pred - y.reshape(-1, 1))) / n_samples
+            self.weights -= self.learning_rate * gradient
+            
     def predict(self, X):
         return np.dot(X, self.weights) + self.bias
 
@@ -36,11 +36,9 @@ class LinearRegression:
 # Logistic Regression
 class LogisticRegression:
     def __init__(self,lr=0.001):
-        self.labelEncodeMapping = {}
-        self.labelDecodeMapping = {}
         self.lr = lr
         self.weights = None
-        self.loss = None
+        self.bias = 0
 
     def sigmoid(self, z):
         return 1 / (1 + e ** (-z))
@@ -53,18 +51,25 @@ class LogisticRegression:
 
     def fit(self, X_train, y_train,x_val,y_val, epochs):
         n_samples, n_features = X_train.shape
-        self.loss = []
         self.weights = rand(n_features).reshape(-1, 1)
-        y_train = self.Encode(y_train)
+        labelencoder = LabelEncoder()
+        y_train = labelencoder.fit_transform(y_train)
+        y_val = labelencoder.fit_transform(y_val)
         for _ in range(epochs):
-            # Gradient Descent
-            prediction = self.sigmoid(dot(X_train, self.weights))
-            self.weights -= self.lr * dot(X_train.T, prediction - y_train) / n_samples
-            # Saving Progress
-            self.loss.append(self.cost_function(X_train, y_train, self.weights))
+            z = np.dot(X_train, self.weights)
+            y_pred = self.sigmoid(z)            
+            gradient = np.dot(X_train.T, (y_pred - y_train.reshape(-1, 1))) / n_samples
+            gradient_bias = np.mean(y_pred - y_train.reshape(-1, 1))
+            self.weights -= self.lr * gradient
+            self.bias -= self.lr * gradient_bias
+
+            predictions = self.predict(x_val)
+            correct_predictions = np.sum(predictions == y_val)
+            accuracy = correct_predictions / len(y_val)
+            print("accuracy:",accuracy)  
 
     def predict(self, X):
-        z = dot(X, self.weights)
+        z = dot(X, self.weights) + self.bias
         return [1 if i > 0.5 else 0 for i in self.sigmoid(z)]
 
     def Out(self, X):
