@@ -11,9 +11,8 @@ Created on Fri April  11 04:02:05 2023
 # Linear Regression
 class LinearRegression:
 
-    def __init__(self, lr=0.001, n_iters=1000, weights=None, bias=0):
+    def __init__(self, lr=0.001, weights=None, bias=0):
         self.learningrate = lr
-        self.iteration = n_iters
         self.weights = weights
         self.bias = bias
 
@@ -36,9 +35,12 @@ class LinearRegression:
 
 # Logistic Regression
 class LogisticRegression:
-    def __init__(self):
+    def __init__(self,lr=0.001):
         self.labelEncodeMapping = {}
         self.labelDecodeMapping = {}
+        self.lr = lr
+        self.weights = None
+        self.loss = None
 
     def sigmoid(self, z):
         return 1 / (1 + e ** (-z))
@@ -49,21 +51,17 @@ class LogisticRegression:
         predict_0 = (1 - y) * log(1 - self.sigmoid(z))
         return -sum(predict_1 + predict_0) / len(X)
 
-    def fit(self, X, y, epochs, lr):
-        n_samples, n_features = X.shape
-        loss = []
-        weights = rand(n_features).reshape(-1, 1)
-        N = len(X)
-        y_encode = self.Encode(y)
+    def fit(self, X_train, y_train,x_val,y_val, epochs):
+        n_samples, n_features = X_train.shape
+        self.loss = []
+        self.weights = rand(n_features).reshape(-1, 1)
+        y_train = self.Encode(y_train)
         for _ in range(epochs):
             # Gradient Descent
-            y_hat = self.sigmoid(dot(X, weights))
-            weights -= lr * dot(X.T, y_hat - y_encode) / N
+            prediction = self.sigmoid(dot(X_train, self.weights))
+            self.weights -= self.lr * dot(X_train.T, prediction - y_train) / n_samples
             # Saving Progress
-            loss.append(self.cost_function(X, y_encode, weights))
-
-        self.weights = weights
-        self.loss = loss
+            self.loss.append(self.cost_function(X_train, y_train, self.weights))
 
     def predict(self, X):
         z = dot(X, self.weights)
