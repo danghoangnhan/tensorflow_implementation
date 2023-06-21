@@ -12,7 +12,7 @@ from keras.layers import BatchNormalization
 from keras.models import Model
 from keras.regularizers import l2
 
-
+#  ResNet-18, ResNet-34, ResNet-50, ResNet-101, ResNet-110, ResNet-152, ResNet-164, ResNet-1202,Wide ResNet,ResNeXt
 class ResNet:
     @staticmethod
     def residual_module(data, K, stride, chanDim, red=False, reg=0.0001, bnEps=2e-5, bnMom=0.9):

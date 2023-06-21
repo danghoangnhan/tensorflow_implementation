@@ -5,7 +5,7 @@ from keras.layers.core import Flatten
 from keras.layers.core import Dense
 from keras import backend as K
 
-
+## VGG16 , VGG19
 class VGG16:
     @staticmethod
     def build(width, height, depth, classes):
