@@ -1,7 +1,7 @@
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense,AvgPool2D
 from tensorflow.keras.models import Model
 
-# LeNet-1,LeNet-4,LeNet-5,Boosted LeNet-4
+# LeNet-1,LeNet-4,LeNet-5
 
 class LeNet_1(Model):
     def __init__(self):

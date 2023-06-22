@@ -62,3 +62,52 @@ class VGG_16(Model):
         output = self.output_layer(x)
         
         return output
+
+class VGG_19(Model):
+    def __init__(self):
+        super(VGG_19, self).__init__()
+        # Input layer
+        self._input = Input(shape=(224, 224, 3))
+
+        # Block 1
+        self.conv1_1 = Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu")(self._input)
+        self.conv1_2 = Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu")(self.conv1_1)
+        self.pool1 = MaxPooling2D((2, 2))(self.conv1_2)
+
+        # Block 2
+        self.conv2_1 = Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu")(self.pool1)
+        self.conv2_2 = Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu")(self.conv2_1)
+        self.pool2 = MaxPooling2D((2, 2))(self.conv2_2)
+
+        # Block 3
+        self.conv3_1 = Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu")(self.pool2)
+        self.conv3_2 = Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu")(self.conv3_1)
+        self.conv3_3 = Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu")(self.conv3_2)
+        self.conv3_4 = Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu")(self.conv3_3)
+        self.pool3 = MaxPooling2D((2, 2))(self.conv3_4)
+
+        # Block 4
+        self.conv4_1 = Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu")(self.pool3)
+        self.conv4_2 = Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu")(self.conv4_1)
+        self.conv4_3 = Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu")(self.conv4_2)
+        self.conv4_4 = Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu")(self.conv4_3)
+        self.pool4 = MaxPooling2D((2, 2))(self.conv4_4)
+
+        # Block 5
+        self.conv5_1 = Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu")(self.pool4)
+        self.conv5_2 = Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu")(self.conv5_1)
+        self.conv5_3 = Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu")(self.conv5_2)
+        self.conv5_4 = Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu")(self.conv5_3)
+        self.pool5 = MaxPooling2D((2, 2))(self.conv5_4)
+
+        # Fully connected layers
+        self.flatten = Flatten()(self.pool5)
+        self.dense1 = Dense(4096, activation="relu")(self.flatten)
+        self.dense2 = Dense(4096, activation="relu")(self.dense1)
+        self.output = Dense(1000, activation="softmax")(self.dense2)
+
+        # Create the model
+        self.model = Model(inputs=self._input, outputs=self.output)
+
+    def call(self, inputs):
+        return self.model(inputs)
