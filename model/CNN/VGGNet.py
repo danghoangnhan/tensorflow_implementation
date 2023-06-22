@@ -64,7 +64,7 @@ class VGG_16(Model):
         return output
 
 class VGG_19(Model):
-    def __init__(self):
+    def __init__(self,intput,classes=1000):
         super(VGG_19, self).__init__()
         # Input layer
         self._input = Input(shape=(224, 224, 3))
@@ -104,7 +104,7 @@ class VGG_19(Model):
         self.flatten = Flatten()(self.pool5)
         self.dense1 = Dense(4096, activation="relu")(self.flatten)
         self.dense2 = Dense(4096, activation="relu")(self.dense1)
-        self.output = Dense(1000, activation="softmax")(self.dense2)
+        self.output = Dense(classes, activation="softmax")(self.dense2)
 
         # Create the model
         self.model = Model(inputs=self._input, outputs=self.output)

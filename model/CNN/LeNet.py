@@ -5,8 +5,7 @@ from tensorflow.keras.models import Model
 
 class LeNet_1(Model):
     def __init__(self):
-        super(LeNet_1, self).__init__()
-        
+        super(LeNet_1, self).__init__()   
         self.conv1 = Conv2D(4, kernel_size=(5, 5), activation='relu', input_shape=(28, 28, 1))
         self.avgpool1 = AvgPool2D(pool_size=(2, 2))
         self.conv2 = Conv2D(8, kernel_size=(5, 5), activation='relu')
@@ -21,7 +20,6 @@ class LeNet_1(Model):
         x = self.avgpool2(x)
         x = self.flatten(x)
         output = self.dense(x)
-        
         return output
     
 class LeNet_4(Model):
@@ -54,12 +52,12 @@ class LeNet5(Model):
         #   That is, the number of neurons has been reduced from 10241024 to 28 ∗ 28 = 784 28 ∗ 28 = 784.
         #   Parameters between input layer and C1 layer: 6 ∗ (5 ∗ 5 + 1)
         self.conv1 = Conv2D(6, kernel_size=(5, 5), activation='relu', input_shape=(28, 28, 1))
-        # The input of this layer is the output of the first layer, which is a 28 * 28 * 6 node matrix.
-        # The size of the filter used in this layer is 2 * 2, and the step length and width are both 2, 
-        # so the output matrix size of this layer is 14 * 14 * 6.
+        #   The input of this layer is the output of the first layer, which is a 28 * 28 * 6 node matrix.
+        #   The size of the filter used in this layer is 2 * 2, and the step length and width are both 2, 
+        #   so the output matrix size of this layer is 14 * 14 * 6.
         self.maxpool1 = MaxPooling2D(pool_size=(2, 2))
         #   The input matrix size of this layer is 14 * 14 * 6, the filter size used is 5 * 5, and the depth is 16.
-        #   This layer does not use all 0 padding, and the step size is 1.
+        #   This layer does notintput use all 0 padding, and the step size is 1.
         #   The output matrix size of this layer is 10 * 10 * 16. This layer has 5 * 5 * 6 * 16 + 16 = 2416 parameters
         self.conv2 = Conv2D(16, kernel_size=(5, 5), activation='relu')
         #   The input matrix size of this layer is 10 * 10 * 16. The size of the filter used in this layer is 2 * 2, and the length and width steps are both 2,
