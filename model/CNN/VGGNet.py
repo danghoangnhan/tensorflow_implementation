@@ -1,5 +1,5 @@
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 #source: https://www.kaggle.com/code/blurredmachine/vggnet-16-architecture-a-complete-guide?scriptVersionId=39674893
 class VGG_16(Model):
     def __init__(self):
@@ -62,5 +62,3 @@ class VGG_16(Model):
         output = self.output_layer(x)
         
         return output
-
-vgg16_model = VGG16Model()
