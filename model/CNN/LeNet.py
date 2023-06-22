@@ -1,14 +1,53 @@
-from keras.layers.convolutional import Conv2D
-from keras.layers.convolutional import MaxPooling2D
-from keras.layers.core import Dense
-from keras.layers.core import Flatten
-from keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense,AvgPool2D
+from tensorflow.keras.models import Model
 
 # LeNet-1,LeNet-4,LeNet-5,Boosted LeNet-4
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 
-class LeNet5(Sequential):
+class LeNet_1(Model):
+    def __init__(self):
+        super(LeNet_1, self).__init__()
+        
+        self.conv1 = Conv2D(4, kernel_size=(5, 5), activation='relu', input_shape=(28, 28, 1))
+        self.avgpool1 = AvgPool2D(pool_size=(2, 2))
+        self.conv2 = Conv2D(8, kernel_size=(5, 5), activation='relu')
+        self.avgpool2 = AvgPool2D(pool_size=(2, 2))
+        self.flatten = Flatten()
+        self.dense = Dense(10, activation='softmax')
+        
+    def call(self, inputs):
+        x = self.conv1(inputs)
+        x = self.avgpool1(x)
+        x = self.conv2(x)
+        x = self.avgpool2(x)
+        x = self.flatten(x)
+        output = self.dense(x)
+        
+        return output
+    
+class LeNet_4(Model):
+    def __init__(self):
+        super(LeNet_4, self).__init__()
+        
+        self.conv1 = Conv2D(4, kernel_size=(5, 5), activation='relu', input_shape=(32, 32, 1))
+        self.avgpool1 = AvgPool2D(pool_size=(2, 2))
+        self.conv2 = Conv2D(16, kernel_size=(5, 5), activation='relu')
+        self.avgpool2 = AvgPool2D(pool_size=(2, 2))
+        self.flatten = Flatten()
+        self.dense1 = Dense(120, activation='relu')
+        self.dense2 = Dense(10, activation='softmax')
+        
+    def call(self, inputs):
+        x = self.conv1(inputs)
+        x = self.avgpool1(x)
+        x = self.conv2(x)
+        x = self.avgpool2(x)
+        x = self.flatten(x)
+        x = self.dense1(x)
+        output = self.dense2(x)
+        
+        return output
+    
+class LeNet5(Model):
     def __init__(self):
         super(LeNet5, self).__init__()
         #   Select 6 feature convolution kernels with a size of 5 * 5 (without offset), and get 66 feature maps. The size of each feature map is 32−5 + 1 = 2832−5 + 1 = 28.
@@ -49,5 +88,4 @@ class LeNet5(Sequential):
         x = self.dense1(x)
         x = self.dense2(x)
         output = self.dense3(x)
-        
         return output
