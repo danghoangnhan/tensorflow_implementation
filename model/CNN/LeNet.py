@@ -1,49 +1,26 @@
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense,AvgPool2D
-from tensorflow.keras.models import Model
+from tensorflow.keras.models import Sequential
 
-# LeNet-1,LeNet-4,LeNet-5
+class LeNet_1(Sequential):
+    def __init__(self,classes=10):
+        super(LeNet_1, self).__init__()
+        self.add(Conv2D(4, kernel_size=(5, 5), activation='relu', input_shape=(28, 28, 1)))
+        self.add(AvgPool2D(pool_size=(2, 2)))
+        self.add(Conv2D(8, kernel_size=(5, 5), activation='relu'))
+        self.add(AvgPool2D(pool_size=(2, 2)))
+        self.add(Flatten())
+        self.add(Dense(classes, activation='softmax'))
 
-class LeNet_1(Model):
-    def __init__(self):
-        super(LeNet_1, self).__init__()   
-        self.conv1 = Conv2D(4, kernel_size=(5, 5), activation='relu', input_shape=(28, 28, 1))
-        self.avgpool1 = AvgPool2D(pool_size=(2, 2))
-        self.conv2 = Conv2D(8, kernel_size=(5, 5), activation='relu')
-        self.avgpool2 = AvgPool2D(pool_size=(2, 2))
-        self.flatten = Flatten()
-        self.dense = Dense(10, activation='softmax')
-        
-    def call(self, inputs):
-        x = self.conv1(inputs)
-        x = self.avgpool1(x)
-        x = self.conv2(x)
-        x = self.avgpool2(x)
-        x = self.flatten(x)
-        output = self.dense(x)
-        return output
-    
-class LeNet_4(Model):
-    def __init__(self):
+class LeNet_4(Sequential):
+    def __init__(self,classes=10):
         super(LeNet_4, self).__init__()
-        
-        self.conv1 = Conv2D(4, kernel_size=(5, 5), activation='relu', input_shape=(32, 32, 1))
-        self.avgpool1 = AvgPool2D(pool_size=(2, 2))
-        self.conv2 = Conv2D(16, kernel_size=(5, 5), activation='relu')
-        self.avgpool2 = AvgPool2D(pool_size=(2, 2))
-        self.flatten = Flatten()
-        self.dense1 = Dense(120, activation='relu')
-        self.dense2 = Dense(10, activation='softmax')
-        
-    def call(self, inputs):
-        x = self.conv1(inputs)
-        x = self.avgpool1(x)
-        x = self.conv2(x)
-        x = self.avgpool2(x)
-        x = self.flatten(x)
-        x = self.dense1(x)
-        output = self.dense2(x)
-        
-        return output
+        self.add(Conv2D(4, kernel_size=(5, 5), activation='relu', input_shape=(32, 32, 1)))
+        self.add(AvgPool2D(pool_size=(2, 2)))
+        self.add(Conv2D(16, kernel_size=(5, 5), activation='relu'))
+        self.add(AvgPool2D(pool_size=(2, 2)))
+        self.add(Flatten())
+        self.add(Dense(120, activation='relu'))
+        self.add(Dense(classes, activation='softmax'))
     
 class LeNet5(Model):
     def __init__(self):

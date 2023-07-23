@@ -1,4 +1,3 @@
-from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 from tensorflow.keras import backend as K
 from tensorflow.keras import Sequential
@@ -13,26 +12,26 @@ class VGG16(Sequential):
             
         self.add(Conv2D(inputShape=inputShape,filters =64, kernel_size=(3, 3), padding="same", activation="relu"))
         self.add(Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu"))
-        self.add(MaxPooling2D((2, 2)))
+        self.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
         self.add(Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu"))
         self.add(Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu"))
-        self.add(MaxPooling2D((2, 2)))
+        self.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
         self.add(Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu"))
         self.add(Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu"))
         self.add(Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu"))
-        self.add(MaxPooling2D((2, 2)))
+        self.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
         self.add(Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu"))
         self.add(Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu"))
         self.add(Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu"))
-        self.add(MaxPooling2D((2, 2)))
+        self.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
         self.add(Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu"))
         self.add(Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu"))
         self.add(Conv2D(512, kernel_size=(3, 3), padding="same", activation="relu"))
-        self.add(MaxPooling2D((2, 2)))
+        self.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
         self.add(Flatten())
         self.add(Dense(4096, activation="relu"))
@@ -45,8 +44,8 @@ class VGG_19(Sequential):
 
         input_shape = (height, width, depth)
 
-        if tf.keras.backend.image_data_format() == "channels_first":
-            input_shape = (depth, height, width)
+        if K.image_data_format() == "channels_first":
+            inputShape = (depth, height, width)
 
         self.add(Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu", input_shape=input_shape))
         self.add(Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu"))

@@ -17,15 +17,11 @@ This is my personal library that implements  state-of-the-art deeplearning model
    ```
 ## References
 
-### VGG
-- VGG-16 Architecture Paper:
-    - Title: Very Deep Convolutional Networks for Large-Scale Image Recognition
-    - Authors: Karen Simonyan, Andrew Zisserman
-    - Year: 2014
-    - [Link to the Paper](https://arxiv.org/abs/1409.1556)
+| Model     | Title                                                        | Authors                                              | Year | Link to Paper                                           |
+|-----------|--------------------------------------------------------------|------------------------------------------------------|------|---------------------------------------------------------|
+| LeNet-1   | Gradient-Based Learning Applied to Document Recognition     | Yann LeCun, Léon Bottou, Yoshua Bengio, Patrick Haffner | 1998 | [Link](http://yann.lecun.com/exdb/publis/pdf/lecun-01a.pdf) |
+| LeNet-4   | Learning Algorithms for Classification: A Comparative Study | Yann LeCun, Léon Bottou, Yoshua Bengio, Patrick Haffner | 1998 | [Link](http://yann.lecun.com/exdb/publis/pdf/lecun-96.pdf) |
+| VGG-16    | Very Deep Convolutional Networks for Image Recognition      | Karen Simonyan, Andrew Zisserman                      | 2014 | [Link](https://arxiv.org/abs/1409.1556)                  |
+| VGG-19    | Very Deep Convolutional Networks for Image Recognition      | Karen Simonyan, Andrew Zisserman                      | 2014 | [Link](https://arxiv.org/abs/1409.1556)                  |
 
-- VGG-19 Architecture Paper:
-    - Title: Very Deep Convolutional Networks for Large-Scale Image Recognition
-    - Authors: Karen Simonyan, Andrew Zisserman
-    - Year: 2014
-    - [Link to the Paper](https://arxiv.org/abs/1409.1556)
+
