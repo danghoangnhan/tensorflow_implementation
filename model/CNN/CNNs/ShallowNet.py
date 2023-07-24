@@ -5,28 +5,18 @@ from keras.layers.core import Flatten
 from keras.layers.core import Dense
 from keras import backend as K
 
+class ShallowNet(Sequential):
+    def __init__(self, width, height, depth, classes):
+        super(ShallowNet, self).__init__()
 
-# from keras.optimizers import SGD
+        input_shape = (height, width, depth)
 
-# Input => CONV => RELU => FC
-class ShallowNet:
-
-    @staticmethod
-    def build(width, height, depth, classes):
-        # initialize the model along with the input shape to be "channels last"
-        model = Sequential()
-        inputShape = (height, width, depth)
-
-        # if we are using "channels first", update the inputShape
         if K.image_data_format() == "channels_first":
-            inputShape = (depth, height, width)
+            input_shape = (depth, height, width)
 
-        # define the first (and only) CONV => RELU layer
-        model.add(Conv2D(32, (3, 3), padding="same", input_shape=inputShape))
-        model.add(Activation("relu"))
-        # softmax classifier
-        model.add(Flatten())
-        model.add(Dense(classes))
-        model.add(Activation("softmax"))
-        # return the constructed network architecture
-        return model
+        self.add(Conv2D(32, (3, 3), padding="same", input_shape=input_shape))
+        self.add(Activation("relu"))
+
+        self.add(Flatten())
+        self.add(Dense(classes))
+        self.add(Activation("softmax"))
