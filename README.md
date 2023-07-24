@@ -15,6 +15,7 @@ This is my personal library that implements  state-of-the-art deeplearning model
    git clone https://github.com/danghoangnhan/machineLearning
    cd machineLearning
    ```
+
 ## References
 
 | Model     | Title                                                        | Authors                                              | Year | Link to Paper                                           |
@@ -22,8 +23,8 @@ This is my personal library that implements  state-of-the-art deeplearning model
 | LeNet-1   | Gradient-Based Learning Applied to Document Recognition     | Yann LeCun, Léon Bottou, Yoshua Bengio, Patrick Haffner | 1998 | [Link](http://yann.lecun.com/exdb/publis/pdf/lecun-01a.pdf) |
 | LeNet-4   | Learning Algorithms for Classification: A Comparative Study | Yann LeCun, Léon Bottou, Yoshua Bengio, Patrick Haffner | 1998 | [Link](http://yann.lecun.com/exdb/publis/pdf/lecun-96.pdf) |
 | LeNet-5   | LeNet-5: Gradient-Based Learning Applied to Document Recognition | Yann LeCun, Léon Bottou, Yoshua Bengio, Patrick Haffner | 1998 | [Link](http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf) |
+| AlexNet   | ImageNet Classification with Deep Convolutional Neural Networks | Alex Krizhevsky, Ilya Sutskever, Geoffrey E. Hinton    | 2012 | [Link](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf) |
 | VGG-16    | Very Deep Convolutional Networks for Image Recognition      | Karen Simonyan, Andrew Zisserman                      | 2014 | [Link](https://arxiv.org/abs/1409.1556)                  |
 | VGG-19    | Very Deep Convolutional Networks for Image Recognition      | Karen Simonyan, Andrew Zisserman                      | 2014 | [Link](https://arxiv.org/abs/1409.1556)                  |
-| AlexNet   | ImageNet Classification with Deep Convolutional Neural Networks | Alex Krizhevsky, Ilya Sutskever, Geoffrey E. Hinton    | 2012 | [Link](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf) |
-
-
+| ResNet-18 | Deep Residual Learning for Image Recognition               | Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun      | 2015 | [Link](https://arxiv.org/abs/1512.03385)                 |
+| ResNet-34 | Deep Residual Learning for Image Recognition               | Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun      | 2015 | [Link](https://arxiv.org/abs/1512.03385)                 |
