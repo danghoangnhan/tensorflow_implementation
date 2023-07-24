@@ -28,7 +28,7 @@ class ResNet2LayerBlock(tf.keras.layers.Layer):
         x = Add()([x, shortcut])
         x = self.activation2(x)
         return x
-    
+
 class ResNet3LayerBlock(tf.keras.layers.Layer):
     def __init__(self, filters, strides=1, activation="relu"):
         super(ResNet3LayerBlock, self).__init__()
@@ -166,7 +166,7 @@ class ResNet34(tf.keras.Model):
         x = self.dense(x)
         return x
 
-class ResNet50(tf.keras.Model):
+class ResNet50(tf.keras.Modconv1x1_1el):
     def __init__(self, input_shape, num_classes):
         super(ResNet50, self).__init__()
         self.conv1 = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding="same", input_shape=input_shape)
