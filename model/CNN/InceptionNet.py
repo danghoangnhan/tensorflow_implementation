@@ -1,132 +1,91 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, AveragePooling2D, Concatenate, Dropout, Flatten, Dense
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, AveragePooling2D, Concatenate, Dropout, Flatten, Dense, BatchNormalization
+from tensorflow.keras import Model
+from tensorflow.keras.layers.core import Activation
+from tensorflow.keras.regularizers import l2
+
+class ConvModule(tf.keras.layers.Layer):
+    def __init__(self, filters, kernel_size, stride, chanDim, padding="same", reg=0.0005, name=None):
+        super(ConvModule, self).__init__(name=name)
+        self.conv = Conv2D(filters, kernel_size, strides=stride, padding=padding, kernel_regularizer=l2(reg))
+        self.bn = BatchNormalization(axis=chanDim)
+        self.relu = Activation("relu")
+
+    def call(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        x = self.relu(x)
+        return x
 
 class InceptionModule(tf.keras.layers.Layer):
-    def __init__(self, filters):
-        super(InceptionModule, self).__init__()
-        
-        self.conv1x1_1 = Conv2D(filters[0], (1, 1), padding='same', activation='relu')
-        self.conv1x1_2 = Conv2D(filters[1], (1, 1), padding='same', activation='relu')
-        self.conv1x1_3 = Conv2D(filters[3], (1, 1), padding='same', activation='relu')
-        self.conv1x1_4 = Conv2D(filters[5], (1, 1), padding='same', activation='relu')
-    
-        self.conv3x3 = Conv2D(filters[2], (3, 3), padding='same', activation='relu')
-        self.conv5x5 = Conv2D(filters[4], (5, 5), padding='same', activation='relu')
-        self.max_pool = MaxPooling2D(pool_size=(3, 3), strides=(1, 1), padding="same")
+    def __init__(self, num1x1, num3x3Reduce, num3x3, num5x5Reduce, num5x5, num1x1Proj, chanDim, reg=0.0005, name=None):
+        super(InceptionModule, self).__init__(name=name)
+
+        # Branch 1: 1x1 convolution for reducing dimensionality before the main convolution
+        self.first = ConvModule(num1x1, (1, 1), 1, chanDim, reg=reg, name=name + "_first")
+
+        # Branch 2: 1x1 convolution (dimension reduction) followed by 3x3 convolution
+        self.second1 = ConvModule(num3x3Reduce, (1, 1), 1, chanDim, reg=reg, name=name + "_second1")
+        self.second2 = ConvModule(num3x3, (3, 3), 1, chanDim, reg=reg, name=name + "_second2")
+
+        # Branch 3: 1x1 convolution (dimension reduction) followed by 5x5 convolution
+        self.third1 = ConvModule(num5x5Reduce, (1, 1), 1, chanDim, reg=reg, name=name + "_third1")
+        self.third2 = ConvModule(num5x5, (5, 5), 1, chanDim, reg=reg, name=name + "_third2")
+
+        # Branch 4: MaxPooling followed by 1x1 convolution for dimension reduction
+        self.fourth_pool = MaxPooling2D((3, 3), strides=(1, 1), padding="same", name=name + "_pool")
+        self.fourth = ConvModule(num1x1Proj, (1, 1), 1, chanDim, reg=reg, name=name + "_fourth")
 
     def call(self, x):
-        conv1x1_1 = self.conv1x1_1(x)
-        conv1x1_2 = self.conv1x1_2(x)
-        conv3x3 = self.conv3x3(conv1x1_2)
-        conv1x1_3 = self.conv1x1_3(x)
-        conv5x5 = self.conv5x5(conv1x1_3)
-        maxpool = self.max_pool(x)
-        conv1x1_4 = self.conv1x1_4(maxpool)
+        # Pass input tensor through each branch
+        first_out = self.first(x)
+        second_out = self.second1(x)
+        second_out = self.second2(second_out)
+        third_out = self.third1(x)
+        third_out = self.third2(third_out)
+        fourth_out = self.fourth_pool(x)
+        fourth_out = self.fourth(fourth_out)
 
-        inception_block = Concatenate(axis=-1)([conv1x1_1, conv3x3, conv5x5, conv1x1_4])
-        return inception_block
+        # Concatenate the outputs along the channel dimension
+        x = Concatenate([first_out, second_out, third_out, fourth_out], axis=self.fourth.filters, name=self.name + "_mixed")
+        return x
 
 class InceptionV1(tf.keras.Model):
-    def __init__(self, input_shape=(224, 224, 3), num_classes=1000):
+    def __init__(self, num_classes, reg=0.0005):
         super(InceptionV1, self).__init__()
-        self.conv1 = Conv2D(64, (7, 7), strides=(2, 2), padding='same', activation='relu')
-        self.pool1 = MaxPooling2D((3, 3), strides=(2, 2), padding='same')
-        self.conv2 = Conv2D(192, (3, 3), padding='same', activation='relu')
-        self.pool2 = MaxPooling2D((3, 3), strides=(2, 2), padding='same')
 
-        self.inception3a = InceptionModule([64, 128, 128, 64, 64, 32])
-        self.inception3b = InceptionModule([128, 192, 96, 128, 128, 64])
+        # Define the input layer
+        self.input_layer = Input(shape=(224, 224, 3))
 
-        self.inception4a = InceptionModule([192, 208, 48, 96, 96, 64])
-        self.inception4b = InceptionModule([160, 224, 64, 112, 112, 64])
-        self.inception4c = InceptionModule([128, 256, 64, 128, 128, 64])
-        self.inception4d = InceptionModule([112, 288, 64, 144, 144, 64])
-        self.inception4e = InceptionModule([256, 320, 128, 160, 160, 128])
+        # Stage 1: Initial Convolution and Pooling
+        x = ConvModule(64, (7, 7), 2, chanDim=-1, padding="valid", reg=reg, name="stage1_conv")(self.input_layer)
+        x = MaxPooling2D((3, 3), strides=(2, 2), padding="valid", name="stage1_pool")(x)
 
-        self.inception5a = InceptionModule([256, 320, 128, 160, 160, 128])
-        self.inception5b = InceptionModule([384, 384, 128, 192, 192, 128])
+        # Stage 2: Inception Module followed by MaxPooling
+        x = InceptionModule(64, 96, 128, 16, 32, 32, -1, reg=reg, name="stage2_inception")(x)
+        x = InceptionModule(128, 128, 192, 32, 96, 64, -1, reg=reg, name="stage2_inception_2")(x)
+        x = MaxPooling2D((3, 3), strides=(2, 2), padding="valid", name="stage2_pool")(x)
 
-        self.avg_pool = AveragePooling2D((7, 7))
-        self.dropout = Dropout(0.4)
-        self.dense = Dense(num_classes, activation='softmax')
+        # Stage 3: Multiple Inception Modules
+        x = InceptionModule(192, 96, 208, 16, 48, 64, -1, reg=reg, name="stage3_inception")(x)
+        x = InceptionModule(160, 112, 224, 24, 64, 64, -1, reg=reg, name="stage3_inception_2")(x)
+        x = InceptionModule(128, 128, 256, 24, 64, 64, -1, reg=reg, name="stage3_inception_3")(x)
+        x = InceptionModule(112, 144, 288, 32, 64, 64, -1, reg=reg, name="stage3_inception_4")(x)
+        x = InceptionModule(256, 160, 320, 32, 128, 128, -1, reg=reg, name="stage3_inception_5")(x)
+        x = MaxPooling2D((3, 3), strides=(2, 2), padding="valid", name="stage3_pool")(x)
 
-    def call(self, inputs):
-        x = self.conv1(inputs)
-        x = self.pool1(x)
-        x = self.conv2(x)
-        x = self.pool2(x)
+        # Stage 4: Multiple Inception Modules
+        x = InceptionModule(256, 160, 320, 32, 128, 128, -1, reg=reg, name="stage4_inception")(x)
+        x = InceptionModule(384, 192, 384, 48, 128, 128, -1, reg=reg, name="stage4_inception_2")(x)
 
-        x = self.inception3a(x)
-        x = self.inception3b(x)
+        # Stage 5: Average Pooling, Dropout, and Fully Connected Layers
+        x = AveragePooling2D((7, 7), strides=1, name="avg_pool")(x)
+        x = Flatten(name="flatten")(x)
+        x = Dropout(0.4, name="dropout")(x)
+        x = Dense(num_classes, activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(reg), name="predictions")(x)
 
-        x = self.inception4a(x)
-        x = self.inception4b(x)
-        x = self.inception4c(x)
-        x = self.inception4d(x)
-        x = self.inception4e(x)
-
-        x = self.inception5a(x)
-        x = self.inception5b(x)
-
-        x = self.avg_pool(x)
-        x = self.dropout(x)
-        x = self.dense(Flatten()(x))
-        return x
-    
-    
-class InceptionBlock(tf.keras.layers.Layer):
-    def __init__(self, conv1_filters, conv3_filters, conv5_filters):
-            super(InceptionBlock, self).__init__()
-            self.conv1x1_1 = Conv2D(conv1_filters[0], kernel_size=(1, 1), padding="same", activation="relu")
-            self.conv1x1_2 = Conv2D(conv1_filters[1], kernel_size=(1, 1), padding="same", activation="relu")
-            self.conv1x1_3 = Conv2D(conv1_filters[2], kernel_size=(1, 1), padding="same", activation="relu")
-            self.conv1x1_4 = Conv2D(conv1_filters[3], kernel_size=(1, 1), padding="same", activation="relu")
-
-            self.conv3x3 = Conv2D(conv3_filters[0], kernel_size=(1, 1), padding="same", activation="relu")
-            self.conv3x3_1 = Conv2D(conv3_filters[1], kernel_size=(3, 3), padding="same", activation="relu")
-            self.conv3x3_2 = Conv2D(conv3_filters[2], kernel_size=(3, 3), padding="same", activation="relu")
-            self.conv3x3_3 = Conv2D(conv3_filters[3], kernel_size=(3, 3), padding="same", activation="relu")
-
-            self.conv5x5 = Conv2D(conv5_filters[0], kernel_size=(1, 1), padding="same", activation="relu")
-            self.conv5x5_1 = Conv2D(conv5_filters[1], kernel_size=(5, 5), padding="same", activation="relu")
-
-            self.max_pool = MaxPooling2D(pool_size=(3, 3), strides=(1, 1), padding="same")
-            self.max_pool_conv = Conv2D(conv5_filters[2], kernel_size=(1, 1), padding="same", activation="relu")
-
-    def call(self, x):
-            branch1 = self.conv1x1_1(x)
-            branch1 = self.conv1x1_2(branch1)
-            branch2 = self.conv3x3_1(self.conv3x3(x))
-            branch3 = self.conv5x5_1(self.conv5x5(x))
-            branch4 = self.max_pool_conv(self.max_pool(x))
-            return concatenate([branch1, branch2, branch3, branch4])
-
-class InceptionV2(tf.keras.Model):
-    def __init__(self, num_classes):
-        super(InceptionV2, self).__init__()
-
-        # Stem block
-        self.stem_block = tf.keras.Sequential([
-            Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding="same", activation="relu"),
-            MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")
-        ])
-
-        # Inception blocks
-        self.inception_block1 = InceptionBlock([64, 64, 64, 64], [64, 96, 96, 32, 32], [128, 128, 128])
-        self.inception_block2 = InceptionBlock([64, 64, 96, 64], [64, 96, 96, 64, 64], [192, 128, 128])
-        self.inception_block3 = InceptionBlock([128, 128, 128, 128], [128, 160, 160, 96, 96], [256, 128, 128])
-        self.inception_block4 = InceptionBlock([128, 128, 128, 128], [128, 160, 160, 128, 128], [384, 128, 128])
-
-        # Global Average Pooling and Classifier
-        self.global_avg_pool = GlobalAveragePooling2D()
-        self.classifier = Dense(num_classes, activation="softmax")
+        # Create the model
+        self.model = tf.keras.Model(inputs=self.input_layer, outputs=x)
 
     def call(self, inputs):
-        x = self.stem_block(inputs)
-        x = self.inception_block1(x)
-        x = self.inception_block2(x)
-        x = self.inception_block3(x)
-        x = self.inception_block4(x)
-        x = self.global_avg_pool(x)
-        x = self.classifier(x)
-        return x
+        return self.model(inputs)
