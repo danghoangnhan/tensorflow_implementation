@@ -1,6 +1,6 @@
 # Tensorflow model Library
 
-This is my personal library that implements  state-of-the-art deeplearning models. The models are implemented using TensorFlow .
+This is my personal library that implements some famous deeplearning models. The models are implemented using TensorFlow .
 
 ## Requirements
 
