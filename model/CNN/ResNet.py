@@ -1,3 +1,11 @@
+"""
+Paper:  K. He, X. Zhang, S. Ren and J. Sun, "Deep Residual Learning for Image Recognition,"
+        2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR), Las Vegas, NV, USA, 2016, pp. 770-778,
+        doi: 10.1109/CVPR.2016.90.
+Maintainer: DanielDu
+This code is a part of the implementation of the above paper.
+Please refer to the link for more details on the methodology and findings.
+"""
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, BatchNormalization, Activation, MaxPooling2D, GlobalAveragePooling2D, Dense, Add
 
