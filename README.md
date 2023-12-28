@@ -28,4 +28,4 @@ This is my personal library that implements some famous deeplearning models. The
 | VGG (16, 19)            | [Very Deep Convolutional Networks for Large-Scale Image Recognition](https://arxiv.org/abs/1409.1556)                    | Karen Simonyan, Andrew Zisserman                      | 2014 |
 | ResNet (18, 34, 50, 101, 152) | [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)                                       | Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun      | 2015 |
 | InceptionV1 (GoogLeNet) | [Going Deeper with Convolutions](https://arxiv.org/abs/1409.4842)                                                      | Christian Szegedy, Wei Liu, Yangqing Jia, Pierre Sermanet, Scott Reed, Dragomir Anguelov, Dumitru Erhan, Vincent Vanhoucke, Andrew Rabinovich | 2014 |
-
+| InceptionV2/V3          | [Rethinking the Inception Architecture for Computer Vision](https://arxiv.org/pdf/1512.00567v3.pdf)             |Christian Szegedy Vincent Vanhoucke Sergey Ioffe Jonathon Shlens | 2015 |
