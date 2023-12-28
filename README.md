@@ -12,8 +12,8 @@ This is my personal library that implements some famous deeplearning models. The
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/danghoangnhan/machineLearning
-   cd machineLearning
+   git clone https://github.com/danghoangnhan/tensorflow_implementation
+   cd tensorflow_implementation
    ```
 
 
