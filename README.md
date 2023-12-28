@@ -21,7 +21,7 @@ This is my personal library that implements some famous deeplearning models. The
 ### Task 
    1. Image Classification
 
-| Model                   | Title (Link to Paper)                                                                                                   | Authors                                              | Year |
+| Model                   | Papers                                                                                                   | Authors                                              | Year |
 |-------------------------|------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------|------|
 | LeNet (1, 4, 5)         | [Gradient-Based Learning Applied to Document Recognition](http://yann.lecun.com/exdb/publis/pdf/lecun-01a.pdf)          | Yann LeCun, Léon Bottou, Yoshua Bengio, Patrick Haffner | 1998 |
 | AlexNet                 | [ImageNet Classification with Deep Convolutional Neural Networks](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf) | Alex Krizhevsky, Ilya Sutskever, Geoffrey E. Hinton    | 2012 |
